@@ -1,0 +1,6 @@
+ring cut cube -.8
+extrude even -5
+bevel corners 5, 4 segments
+bevel edges 2, 2 segments
+
+for trim, cut bottom, extend 5, scale 1.02
