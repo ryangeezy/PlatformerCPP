@@ -33,7 +33,7 @@
 		},
 		{
 			"Name": "AutoSizeComments",
-			"Enabled": true,
+			"Enabled": false,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/ae89a2c4ab384de0a3f213b23de324f3"
 		},
 		{
@@ -42,6 +42,14 @@
 		},
 		{
 			"Name": "SteamVR",
+			"Enabled": false
+		},
+		{
+			"Name": "SunPosition",
+			"Enabled": true
+		},
+		{
+			"Name": "DatasmithContent",
 			"Enabled": false
 		}
 	]

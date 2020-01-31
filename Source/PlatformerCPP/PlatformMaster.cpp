@@ -21,9 +21,6 @@ void APlatformMaster::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerReference = Cast<ADimenseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (PlayerReference->bDebugPlatformRemote){
-		//GetWorld()->DebugDrawTraceTag = TopTraceTag;
-	}
 }
 
 // Called every frame
@@ -33,17 +30,19 @@ void APlatformMaster::Tick(float DeltaTime)
 }
 
 // Checks if there is another platform above this platform by tracing a box the width and height of the player from where the player will land
-bool APlatformMaster::PlatformAbovePlatformCheck(FVector FootLocation) 
+bool APlatformMaster::PlatformAbovePlatformCheck() 
 {
+	FVector Origin; FVector Extent; GetActorBounds(true, Origin, Extent);
 	FVector Offset = PlayerReference->GetActorLocation() + PlayerReference->GetDimenseOffset(this, false);
-	FVector Start = FVector(Offset.X, Offset.Y, FootLocation.Z);
+	FVector Start = FVector(Offset.X, Offset.Y, this->GetActorLocation().Z+(Extent.Z/2));
 	FVector End = Start + FVector(0, 0, PlayerReference->MyHeight);
-	FCollisionShape NewBox; NewBox.SetBox(FVector(PlayerReference->MyWidth, PlayerReference->MyWidth, 0)); //20,20 = width of the player
+	FVector PlayerWidthOffset = FVector(5, 5, 0);
+	FCollisionShape NewBox; NewBox.SetBox(FVector(PlayerReference->MyWidth/2, PlayerReference->MyWidth/2, 0) - (PlayerWidthOffset/2)); //box trace, width of the player
 	GetWorld()->SweepSingleByChannel(TopHitResult, Start, End, FRotator(0,0,0).Quaternion(), ECollisionChannel::ECC_WorldStatic, NewBox, TopQParams, TopRParams);
 	APlatformMaster* HitObject = Cast<APlatformMaster>(TopHitResult.GetActor());
 	if (HitObject){ //&& HitObject->GetFullName() != this->GetFullName()) {
 		if (PlayerReference->bDebugPlatformRemote){
-			FVector Origin; FVector Extent; GetActorBounds(true, Origin, Extent);
+			DrawDebugBox(GetWorld(), Offset, FVector(PlayerReference->MyWidth/2, PlayerReference->MyWidth/2, PlayerReference->MyHeight/2) - (PlayerWidthOffset/2), FColor::Red, false, .5, 95, 5);
 			DrawDebugBox(GetWorld(), Origin, Extent, FColor::Turquoise, false, .5, 95, 10);
 		}
 		return true;

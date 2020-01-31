@@ -2,6 +2,7 @@
 Content/3rdParty/*
 Content/Textures/*
 Content/*BuiltData.uasset
+Assets/*
 
 # Visual Studio 2015 user specific files
 .vs/

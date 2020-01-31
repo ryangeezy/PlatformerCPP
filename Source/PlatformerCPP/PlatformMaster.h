@@ -21,21 +21,21 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Platform Functions", meta = (Tooltip = "Checks if there is another platform above this platform by tracing a box the width and height of the player from where the player will land."))
-		bool PlatformAbovePlatformCheck(FVector FootLocation);
+	UFUNCTION(BlueprintCallable, Category = "Platform", meta = (Tooltip = "Checks if there is another platform above this platform by tracing a box the width and height of the player from where the player will land."))
+		bool PlatformAbovePlatformCheck();
 	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true", Tooltip = "Reference to the player as DimenseCharacter."))
+	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "Reference to the player as DimenseCharacter."))
 		ADimenseCharacter* PlayerReference;
 
-	UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true", Tooltip = "TraceTag for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
+	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "TraceTag for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
 		FName TopTraceTag;
 
-	UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true", Tooltip = "HitResult for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
+	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "HitResult for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
 		FHitResult TopHitResult;
 
 	//UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true"))
