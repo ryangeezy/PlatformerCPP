@@ -1,4 +1,4 @@
-// Copyright Ryan Gourley 2019
+// Copyright 2020 Ryan Gourley
 
 #pragma once
 
@@ -29,18 +29,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "Reference to the player as DimenseCharacter."))
-		ADimenseCharacter* PlayerReference;
-
-	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "TraceTag for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
-		FName TopTraceTag;
-
-	UPROPERTY(VisibleAnywhere, Category = "Platform", meta = (AllowPrivateAccess = "true", Tooltip = "HitResult for vertical box trace from top of this platform - PlatformAbovePlatformCheck()."))
-		FHitResult TopHitResult;
-
-	//UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true"))
-	FCollisionQueryParams TopQParams;
-
-	//UPROPERTY(VisibleAnywhere, Category = "Platform Variables", meta = (AllowPrivateAccess = "true"))
-	FCollisionResponseParams TopRParams;
+	ADimenseCharacter* PlayerReference;
+	FHitResult TopHitResult;
+	FName TraceTag;
+	FCollisionQueryParams QParams;
+	
 };

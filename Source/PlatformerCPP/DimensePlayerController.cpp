@@ -1,4 +1,4 @@
-// Copyright Ryan Gourley 2019
+// Copyright 2020 Ryan Gourley
 
 #include "DimensePlayerController.h"
 

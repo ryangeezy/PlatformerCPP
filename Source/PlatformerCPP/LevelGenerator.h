@@ -1,4 +1,4 @@
-// Copyright 2019 Ryan Gourley 
+// Copyright 2020 Ryan Gourley
 
 #pragma once
 
