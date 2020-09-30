@@ -49,15 +49,36 @@ public:
 			int32 VisibilitySide;
 
 		//Debug
-			UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-				bool bDebug;
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebug;
 
-			UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-				bool bDebugPlatformRemote;
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugPlatformRemote;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugVisibility;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugGround;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugTransport;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugAbovePlatform;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugMoveAround;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugInvalidation;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bDebugCachedInvalidation;
 
 	//Functions
 		UFUNCTION(BlueprintCallable, Category = "Movement") 
-			FVector GetDimenseOffset(const APlatformMaster* Platform, const bool bDebugLocal) const;
+			FVector GetTransportOffset(const APlatformMaster* Platform) const;
 
 		UFUNCTION(BlueprintCallable, Category = "Movement")
 			FVector GetMoveAroundOffset(const FVector& Location) const;
@@ -67,20 +88,20 @@ public:
 
 		//Event Functions
 			UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Timers")
-				void ResetCanDimense() const; //ignore green squigly
-				virtual void ResetCanDimense_Implementation() const;
+				void ResetCanTransport(); //ignore green squigly
+				virtual void ResetCanTransport_Implementation();
 
 			UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Timers")
-				void ResetCanMoveAround() const; //ignore green squigly
-				virtual void ResetCanMoveAround_Implementation() const;
+				void ResetCanMoveAround(); //ignore green squigly
+				virtual void ResetCanMoveAround_Implementation();
 
 			UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Timers")
-				void StartCanDimenseTimer() const; //ignore green squigly
-				virtual void StartCanDimenseTimer_Implementation() const;
+				void StartCanTransportTimer(); //ignore green squigly
+				virtual void StartCanTransportTimer_Implementation();
 
 			UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Timers")
-				void StartCanMoveAroundTimer() const; //ignore green squigly
-				virtual void StartCanMoveAroundTimer_Implementation() const;
+				void StartCanMoveAroundTimer(); //ignore green squigly
+				virtual void StartCanMoveAroundTimer_Implementation();
 
 private:
 	//Default Required
@@ -97,12 +118,13 @@ private:
 		FVector CachedCharacterMovementVelocity;
 		FVector CachedComponentVelocity;
 		FVector FromCameraLineVector;
-		FVector GroundLocation;
 		FVector LandingOffsetPadding;
+		FVector NullVector;
+		FVector HeightPadding;
 		int32 FacingDirection;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
-			APlatformMaster* CachedDimensePlatform = nullptr;
+			APlatformMaster* CachedTransportPlatform = nullptr;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			APlatformMaster* CachedMoveAroundPlatform = nullptr;
@@ -111,7 +133,7 @@ private:
 			APlatformMaster* CachedGroundPlatform = nullptr;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
-			APlatformMaster* DimensePlatform = nullptr;
+			APlatformMaster* TransportPlatform = nullptr;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			APlatformMaster* GroundPlatform = nullptr;
@@ -120,7 +142,7 @@ private:
 			APlatformMaster* MoveAroundPlatform = nullptr;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool bCanDimense;
+			bool bCanTransport;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool bCanMoveAround;
@@ -135,7 +157,7 @@ private:
 			bool bSpinning;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
-			FHitResult DimenseHitResult;
+			FHitResult TransportHitResult;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			FHitResult FrontHitResult;
@@ -159,7 +181,7 @@ private:
 			FHitResult RightHitResult;	
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			float DimenseTraceZOffset;
+			float TransportTraceZOffset;
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			float GroundTraceLength;
@@ -178,6 +200,9 @@ private:
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 			FVector CamRightVector;
+
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+			FVector GroundLocation;
 
 		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			int32 DeathDistance;
@@ -223,10 +248,10 @@ private:
 		void InitDebug();
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool BoxTraceForDimenseHit(const float& ZOffset);
+			bool BoxTraceForTransportHit(const float& ZOffset);
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool BoxTraceForMoveAroundHit(FHitResult& HitResult);
+			bool BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector BoxTraceOffset);
 
 		UFUNCTION(BlueprintCallable, Category = "Events", meta = (AllowPrivateAccess = "true"))
 			bool CheckDeathByFallDistance();
@@ -244,7 +269,7 @@ private:
 			bool LeftHitCheck();
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool PlayerAbovePlatformCheck(const APlatformMaster* Platform, const bool bDebugLocal) const;
+			bool PlayerAbovePlatformCheck(const APlatformMaster* Platform) const;
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool RightHitCheck();
@@ -261,13 +286,13 @@ private:
 			bool SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVector& Start, const FVector& End) const;
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool TryDimense();
+			bool TryTransport();
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool TryMoveAround(UPARAM(ref) FHitResult& HitResult);
+			bool TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector BoxTraceOffset);
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal);
+			bool BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal);
 		
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool VisibilityCheck(const FVector& Start);
@@ -284,8 +309,11 @@ private:
 		UFUNCTION(BlueprintCallable, Category = "Events", meta = (AllowPrivateAccess = "true"))
 			void Die();
 
+		UFUNCTION(BlueprintCallable, Category = "Events", meta = (AllowPrivateAccess = "true"))
+			void KillMomentum();
+
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			void Dimense();
+			void Transport();
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			void DoLineTracesAndPlatformChecks();
@@ -297,10 +325,10 @@ private:
 			void SetVisibilitySide();
 
 		UFUNCTION(BlueprintCallable, Category = "Platforms", meta = (AllowPrivateAccess = "true"))
-			void InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& CachedPlatform, const bool bDebugLocal, const FColor DebugColor = FColor::Red);
+			void InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor = FColor::Red);
 
 		UFUNCTION(BlueprintCallable, Category = "Platforms", meta = (AllowPrivateAccess = "true"))
-			void InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, const bool bDebugLocal, const FColor DebugColor = FColor::Red);
+			void InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor = FColor::Red);
 		
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			void JumpDown();

@@ -30,8 +30,7 @@ protected:
 
 public:
 	ADimenseCharacter* PlayerReference;
-	FHitResult TopHitResult;
+	FHitResult AboveHitResult;
 	FName TraceTag;
-	FCollisionQueryParams QParams;
-	
+	FCollisionQueryParams QParams;	
 };
