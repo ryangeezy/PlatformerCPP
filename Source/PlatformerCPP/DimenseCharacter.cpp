@@ -19,6 +19,7 @@
 #include "DrawDebugHelpers.h"
 #include "DimensePlayerController.h"
 #include "PlatformMaster.h"
+#include "SurfacePlatformComponent.h"
 
 // Sets default values
 ADimenseCharacter::ADimenseCharacter()
@@ -103,14 +104,14 @@ ADimenseCharacter::ADimenseCharacter()
 	FromCameraLineLength = MainCameraSpringArm->TargetArmLength;
 	//A vector based on FromCameraLineLength, typically multiplied by a CamForwardVector/CamRightVector (so either x or y becomes 0, based on 90 degree angles)
 	FromCameraLineVector = FVector(FromCameraLineLength, FromCameraLineLength, 0.0f);
-};
+}
 
 // Called when the game starts or when spawned
 void ADimenseCharacter::BeginPlay()
 {
 	Super::BeginPlay(); // DO NOT remove
 	InitDebug();
-};
+}
 
 // Called every frame
 void ADimenseCharacter::Tick(float DeltaTime)
@@ -134,7 +135,7 @@ void ADimenseCharacter::Tick(float DeltaTime)
 		FVector Origin; FVector Extent;
 		GroundPlatform->GetActorBounds(true, Origin, Extent);
 		float GroundZ = GroundPlatform->GetActorLocation().Z + Extent.Z;
-		FVector PlayerLocation = PhysicsComp->GetComponentLocation();
+		FVector PlayerLocation = GetActorLocation();
 		GroundLocation = FVector(PlayerLocation.X, PlayerLocation.Y, GroundZ); //Set the ground location
 	}
 	if (GroundPlatform || FacingDirection != 0) {
@@ -144,7 +145,7 @@ void ADimenseCharacter::Tick(float DeltaTime)
 	if (bDebug) {
 		Debug();
 	}
-};
+}
 
 void ADimenseCharacter::DoLineTracesAndPlatformChecks()
 {
@@ -178,14 +179,14 @@ void ADimenseCharacter::DoLineTracesAndPlatformChecks()
 			TryMoveAround(LeftHitResult, NullVector);
 		}
 	}
-};
+}
 
 bool ADimenseCharacter::HorizontalHitCheck(const FVector& Location, FHitResult& HitResult)
 {
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
-	FVector	Center = PhysicsComp->GetComponentLocation();
+	FVector	Center = GetActorLocation();
 	float X = CamSide * (MyWidth / 2);
 	float Y = CamSide * (MyWidth / 2);
 
@@ -225,14 +226,14 @@ bool ADimenseCharacter::HorizontalHitCheck(const FVector& Location, FHitResult& 
 		return true;
 	}
 	return false;
-};
+}
 
 bool ADimenseCharacter::LeftHitCheck()
 {
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
-	FVector	Center = PhysicsComp->GetComponentLocation();
+	FVector	Center = GetActorLocation();
 	float X = CamSide * (MyWidth / 2);
 	float Y = CamSide * (MyWidth / 2);
 
@@ -296,14 +297,14 @@ bool ADimenseCharacter::LeftHitCheck()
 		return true;
 	}
 	return false;
-};
+}
 
 bool ADimenseCharacter::RightHitCheck()
 {
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
-	FVector	Center = PhysicsComp->GetComponentLocation();
+	FVector	Center = GetActorLocation();
 	float X = CamSide * (MyWidth / 2);
 	float Y = CamSide * (MyWidth / 2);
 
@@ -362,25 +363,27 @@ bool ADimenseCharacter::RightHitCheck()
 		return true;
 	}
 	return false;
-}; 
+} 
 
 bool ADimenseCharacter::TryTransport()
 {
 	if (bCanTransport) {
 		if (BoxTraceForTransportHit(TransportTraceZOffset)) {
-			if (SetPlatform(TransportPlatform, CachedTransportPlatform, TransportHitResult, FColor::Green, false)) {
-				if(PlayerAbovePlatformCheck(TransportPlatform)){
-					if (!TransportPlatform->PlatformAbovePlatformCheck()) {
-						Transport();
-						StartCanTransportTimer();
-						return true;
+			if (Cast<USurfacePlatformComponent>(TransportHitResult.GetActor()->FindComponentByClass(USurfacePlatformComponent::StaticClass()))) {
+				if (SetPlatform(TransportPlatform, CachedTransportPlatform, TransportHitResult, FColor::Green, false)) {
+					if (PlayerAbovePlatformCheck(TransportPlatform)) {
+						if (!TransportPlatform->PlatformAbovePlatformCheck()) {
+							Transport();
+							StartCanTransportTimer();
+							return true;
+						}
 					}
 				}
 			}
 		}
 	}
 	return false;
-};
+}
 
 bool ADimenseCharacter::BoxTraceForTransportHit(const float& ZOffset) {
 	FVector BoxSize = FVector((MyWidth / 2), (MyWidth / 2), 0);
@@ -396,7 +399,7 @@ bool ADimenseCharacter::BoxTraceForTransportHit(const float& ZOffset) {
 		DrawDebugBox(GetWorld(), Center, Extent, FColor::Green, false, 0.01f, 0, 3.0f);
 	}
 	return GetWorld()->SweepSingleByChannel(TransportHitResult, Start, End, MainCamera->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams);
-};
+}
 
 void ADimenseCharacter::Transport()
 {
@@ -405,18 +408,18 @@ void ADimenseCharacter::Transport()
 	}
 	PhysicsComp->AddWorldOffset(GetTransportOffset(TransportPlatform));
 	StartCanMoveAroundTimer();
-};
+}
 
 FVector ADimenseCharacter::GetTransportOffset(const APlatformMaster* Platform) const
 {
 	FVector Origin; FVector Extent; Platform->GetActorBounds(true, Origin, Extent);
-	FVector Offset = FVector(TransportHitResult.Location.X, TransportHitResult.Location.Y, Origin.Z + Extent.Z) - PhysicsComp->GetComponentLocation();
+	FVector Offset = FVector(TransportHitResult.Location.X, TransportHitResult.Location.Y, Origin.Z + Extent.Z) - GetActorLocation();
 	FVector TransportOffset = CamForwardVector.GetAbs() * (Offset + (LandingOffsetPadding.X * CamSide * CamSign * VisibilitySide));
 	if (bDebug && bDebugTransport) {
 		DrawDebugBox(GetWorld(), Origin, Extent, FColor::Green, false, 0.5f, 0,10.0f);
 	}
 	return TransportOffset;
-};
+}
 
 bool ADimenseCharacter::TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector BoxTraceOffset)
 {
@@ -429,15 +432,15 @@ bool ADimenseCharacter::TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector
 		}
 	}
 	return false;
-};
+}
 
 bool ADimenseCharacter::BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector Offset)
 {
 	FVector BoxSize = FVector(MyWidth / 2, MyWidth / 2, MyHeight / 2);
 	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
 	FVector LineVector = FromCameraLineVector * CamForwardVector * VisibilitySide;
-	FVector Start = PhysicsComp->GetComponentLocation() - LineVector + Offset;
-	FVector End = PhysicsComp->GetComponentLocation() + LineVector + Offset;
+	FVector Start = GetActorLocation() - LineVector + Offset;
+	FVector End = GetActorLocation() + LineVector + Offset;
 	if (bDebug && bDebugMoveAround) {
 		FVector Length = Start + End;
 		FVector SweepCenter = Length / 2;
@@ -445,7 +448,7 @@ bool ADimenseCharacter::BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector 
 		DrawDebugBox(GetWorld(), SweepCenter, SweepExtent, FColor::Orange, false, 0.5f, 0, 3.0f);
 	}
 	return GetWorld()->SweepSingleByChannel(MoveAroundHitResult, Start, End, MainCamera->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams);
-};
+}
 
 void ADimenseCharacter::MoveAround()
 {
@@ -454,20 +457,49 @@ void ADimenseCharacter::MoveAround()
 	}
 	PhysicsComp->AddWorldOffset(GetMoveAroundOffset(MoveAroundHitResult.Location));
 	StartCanTransportTimer();
-};
+}
 
 FVector ADimenseCharacter::GetMoveAroundOffset(const FVector& Location) const
 {
-	FVector Offset = Location - PhysicsComp->GetComponentLocation();
+	FVector Offset = Location - GetActorLocation();
 	FVector WorldOffset = FVector(1.0f, 1.0f, 0.0f) * CamForwardVector * VisibilitySide * CamSide * CamSign * (Offset - LandingOffsetPadding * CamSide * CamSign);
 	if (bDebug && bDebugMoveAround) {
 		FVector Origin; FVector Extent; MoveAroundPlatform->GetActorBounds(true, Origin, Extent);
-		DrawDebugDirectionalArrow(GetWorld(), PhysicsComp->GetComponentLocation() - FVector(0.0f, 0.0f, MyHeight / 2), PhysicsComp->GetComponentLocation() - FVector(0.0f, 0.0f, MyHeight / 2) + WorldOffset, 500.0f, FColor::Orange, false, 5.0f, 54, 3.0f);
+		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2) + WorldOffset, 500.0f, FColor::Orange, false, 5.0f, 54, 3.0f);
 		//DrawDebugSphere(GetWorld(), HitResult.Location, 10, 4, FColor::Yellow, false, 3, 0, 10);
 		DrawDebugBox(GetWorld(), Origin, Extent, FColor::Orange, false, 0.5f, 0, 10.0f);
 	}
 	return WorldOffset;
-};
+}
+
+bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal)
+{
+	FVector BoxSize = FVector(CamSide * (MyWidth / 2), CamSide * (MyWidth / 2), MyHeight / 2);
+	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
+	FVector Start = GetActorLocation();
+	FVector End = Start + ((FVector(0.0f, 0.0f, TraceLength) * UpOrDown));
+	if (GetWorld()->SweepSingleByChannel(HitResult, Start, End, PhysicsComp->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams)) {
+		if (bDebug && bDebugLocal) {
+			GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Black, (TEXT("%s was hit"), DebugPhrase));
+			DrawDebugBox(GetWorld(), Start, Box.GetExtent(), FColor::Red, false, 0.1f, 0, 1.0f); //Brown
+		}
+		return true;
+	}
+	if (bDebug && bDebugLocal) {
+		DrawDebugBox(GetWorld(), Start, Box.GetExtent(), FColor::Orange, false, 0.1f, 0, 1.0f);
+	}
+	return false;
+}
+
+
+
+
+
+
+
+
+
+
 
 // Functions below this line are considered complete and have no known problems /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -490,26 +522,7 @@ bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& Hi
 		DrawDebugBox(GetWorld(), Location + DebugBoxOffset, Box.GetExtent() + DebugBoxOffset, FColor::Green, false, 0.1f, 0,1.0f);
 	}
 	return false;
-};
-
-bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal)
-{
-	FVector BoxSize = FVector(CamSide * (MyWidth / 2), CamSide * (MyWidth / 2), MyHeight / 2);
-	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
-	FVector Start = PhysicsComp->GetComponentLocation();
-	FVector End = Start + ((FVector(0.0f, 0.0f, TraceLength) * UpOrDown));
-	if (GetWorld()->SweepSingleByChannel(HitResult, Start, End, PhysicsComp->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams)) {
-		if (bDebug && bDebugLocal) {
-			GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Black, (TEXT("%s was hit"), DebugPhrase));
-			DrawDebugBox(GetWorld(), Start, Box.GetExtent(), FColor::Red, false, 0.1f, 0, 1.0f); //Brown
-		}
-		return true;
-	}
-	if (bDebug && bDebugLocal) {
-		DrawDebugBox(GetWorld(), Start, Box.GetExtent(), FColor::Orange, false, 0.1f, 0, 1.0f);
-	}
-	return false;
-};
+}
 
 bool ADimenseCharacter::SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, UPARAM(ref) FHitResult& HitResult, const FColor DebugColor, const bool bDebugLocal)
 {
@@ -528,7 +541,7 @@ bool ADimenseCharacter::SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPAR
 		}
 	}
 	return false;
-};
+}
 
 bool ADimenseCharacter::PlayerAbovePlatformCheck(const APlatformMaster* Platform) const
 {
@@ -546,7 +559,7 @@ bool ADimenseCharacter::PlayerAbovePlatformCheck(const APlatformMaster* Platform
 		DrawDebugBox(GetWorld(), Origin, Extent, FColor::FromHex(TEXT("0081FFFF")), false, 0.5f, 0, 10.0f); //Blue
 	}
 	return false;
-};
+}
 
 void ADimenseCharacter::InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor)
 {
@@ -558,7 +571,7 @@ void ADimenseCharacter::InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platfor
 		CachedPlatform = Platform;
 		Platform = nullptr;
 	}
-};
+}
 
 void ADimenseCharacter::InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor)
 {
@@ -569,7 +582,7 @@ void ADimenseCharacter::InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& C
 		}
 		CachedPlatform = nullptr;
 	}
-};
+}
 
 void ADimenseCharacter::UpdateMovementSystemVariables()
 {
@@ -584,11 +597,11 @@ void ADimenseCharacter::UpdateMovementSystemVariables()
 	}
 
 	//Head and foot location used by the movement system
-	FootLocation = PhysicsComp->GetComponentLocation() - (FVector(0.0f, 0.0f, MyHeight/2));
+	FootLocation = GetActorLocation() - (FVector(0.0f, 0.0f, MyHeight/2));
 	HeadLocation = FootLocation + FVector(0.0f, 0.0f, MyHeight);
 	SetMovementDirection();
 	SetVisibilitySide();
-};
+}
 
 void ADimenseCharacter::SetMovementDirection() {
 	//Check if the player is moving to the right
@@ -603,37 +616,37 @@ void ADimenseCharacter::SetMovementDirection() {
 	else if (PhysicsComp->GetComponentVelocity().X == 0.0f && PhysicsComp->GetComponentVelocity().Y == 0.0f) {
 		MovementDirection = 0;
 	}
-};
+}
 
 FVector ADimenseCharacter::GetMovementInputFRI() //(FRI = Frame Rate Independent)
 {
 	return GetWorld()->GetDeltaSeconds() * ConsumeMovementInputVector() * WalkAcceleration;
-};
+}
 
 int32 ADimenseCharacter::MoveLeftRight(const float& AxisValue)
 {
 	GetCharacterMovement()->AddInputVector(CamRightVector * AxisValue);
 	FacingDirection = FMath::Sign(AxisValue);
 	return FacingDirection;
-};
+}
 
 void ADimenseCharacter::JumpDown()
 {
 	if (GroundPlatform) {
 		if (BoxTraceForTransportHit(TransportTraceZOffset)) {
 			if (SetPlatform(TransportPlatform, CachedTransportPlatform, TransportHitResult, FColor::Green, bDebugTransport)) {
-				FVector Offset = FVector(1.0f, 1.0f, 0.0f) * (TransportHitResult.Location - PhysicsComp->GetComponentLocation() - LandingOffsetPadding * CamForwardVector * VisibilitySide);
+				FVector Offset = FVector(1.0f, 1.0f, 0.0f) * (TransportHitResult.Location - GetActorLocation() - LandingOffsetPadding * CamForwardVector * VisibilitySide);
 				PhysicsComp->AddWorldOffset(Offset);
 				StartCanTransportTimer();
 			}
 		}
 	}
-};
+}
 
 bool ADimenseCharacter::IsFallingDownward() const
 {
 	return PhysicsComp->GetComponentVelocity().Z < 0.0f;
-};
+}
 
 bool ADimenseCharacter::CheckDeathByFallDistance()
 {
@@ -651,7 +664,7 @@ bool ADimenseCharacter::CheckDeathByFallDistance()
 		}
 	}
 	return false;
-};
+}
 
 void ADimenseCharacter::SetVisibilitySide()
 {
@@ -664,7 +677,7 @@ void ADimenseCharacter::SetVisibilitySide()
 			VisibilitySide = 0;
 		}
 	}
-};
+}
 
 bool ADimenseCharacter::VisibilityCheck(const FVector& Start)
 {
@@ -672,7 +685,7 @@ bool ADimenseCharacter::VisibilityCheck(const FVector& Start)
 	float Distance = MainCameraSpringArm->TargetArmLength;
 	float X = CamSide * PhysicsComp->Bounds.BoxExtent.X;
 	float Y = CamSide * PhysicsComp->Bounds.BoxExtent.Y;
-	FVector PlayerLocation = PhysicsComp->GetComponentLocation();
+	FVector PlayerLocation = GetActorLocation();
 	FVector End;
 
 	End = FootLocation;
@@ -710,7 +723,7 @@ bool ADimenseCharacter::VisibilityCheck(const FVector& Start)
 		return false;
 	}
 	return true;
-};
+}
 
 bool ADimenseCharacter::SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVector& Start, const FVector& End) const {
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QParams);
@@ -718,7 +731,7 @@ bool ADimenseCharacter::SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVe
 		return true;
 	}
 	return false;
-};
+}
 
 void ADimenseCharacter::PauseMovement()
 {
@@ -727,7 +740,7 @@ void ADimenseCharacter::PauseMovement()
 	bCanMoveAround = false;
 	GetCharacterMovement()->GravityScale = 0.0f;
 	KillMomentum();
-};
+}
 
 void ADimenseCharacter::KillMomentum() 
 {
@@ -748,7 +761,7 @@ void ADimenseCharacter::ResumeMovement()
 	bCanMoveAround = true;
 	bCanTransport = true;
 	EnableInput(GetWorld()->GetFirstPlayerController());
-};
+}
 
 void ADimenseCharacter::RotateMeshToMovement()
 {
@@ -756,7 +769,7 @@ void ADimenseCharacter::RotateMeshToMovement()
 	auto MeshLatentInfo = FLatentActionInfo();
 	MeshLatentInfo.CallbackTarget = GetMesh();
 	UKismetSystemLibrary::MoveComponentTo(GetMesh(), GetMesh()->GetRelativeLocation(), FRotator(0.0f, (LookAtRotation.Yaw) + 90.0f + -90.0f * FacingDirection, 0.0f), true, true, MeshRotationTime, false, EMoveComponentAction::Move, MeshLatentInfo);
-};
+}
 
 void ADimenseCharacter::RotateCamera(const float& Rotation)
 {
@@ -776,7 +789,7 @@ void ADimenseCharacter::RotateCamera(const float& Rotation)
 			}
 		}
 	}
-};
+}
 
 void ADimenseCharacter::Die()
 {
@@ -786,7 +799,7 @@ void ADimenseCharacter::Die()
 	InvalidatePlatform(GroundPlatform, CachedGroundPlatform);
 	InvalidatePlatform(TransportPlatform, CachedTransportPlatform);
 	InvalidatePlatform(MoveAroundPlatform, CachedMoveAroundPlatform);
-};
+}
 
 void ADimenseCharacter::Respawn()
 {
@@ -795,12 +808,12 @@ void ADimenseCharacter::Respawn()
 	PhysicsComp->SetWorldLocation(GroundLocation+FVector(0.0f,0.0f,MyHeight/2));
 	GetCharacterMovement()->GravityScale = 1.0f;
 	EnableInput(GetWorld()->GetFirstPlayerController());
-};
+}
 
 FVector ADimenseCharacter::RoundVector(const FVector& Vector) const
 {
 	return FVector(FMath::RoundToInt(Vector.X), FMath::RoundToInt(Vector.Y), FMath::RoundToInt(Vector.Z));
-};
+}
 
 void ADimenseCharacter::ResetCanMoveAround_Implementation() {}
 void ADimenseCharacter::StartCanMoveAroundTimer_Implementation() {}
@@ -814,8 +827,18 @@ bool ADimenseCharacter::SingleBoxTrace(UPARAM(ref) FHitResult& HitResult, const 
 		return true;
 	}
 	return false;
-};
+}
 */
+
+
+
+
+
+
+
+
+
+
 
 // Init and Debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -823,7 +846,7 @@ bool ADimenseCharacter::SingleBoxTrace(UPARAM(ref) FHitResult& HitResult, const 
 void ADimenseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-};
+}
 
 void ADimenseCharacter::InitDebug()
 {
@@ -831,7 +854,7 @@ void ADimenseCharacter::InitDebug()
 	if (!bDebug) {
 		bDebugPlatformRemote = false;
 	}
-};
+}
 
 void ADimenseCharacter::Debug() const
 {
@@ -927,4 +950,4 @@ void ADimenseCharacter::Debug() const
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, (TEXT("%s"), FString(TEXT("HeadLocation: ")) + HeadLocation.ToString()));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, (TEXT("%s"), FString(TEXT("GroundLocation: ")) + *GroundLocation.ToString()));
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Black, (TEXT("%s"), FString(TEXT("CameraForwardVector: ")) + *CamForwardVector.ToString()));
-};
+}

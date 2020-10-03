@@ -13,20 +13,20 @@ APlatformMaster::APlatformMaster()
 	PrimaryActorTick.bStartWithTickEnabled = false;
 	TraceTag = FName(TEXT("TraceTag"));
 	QParams = FCollisionQueryParams(TraceTag, false, this);
-};
+}
 
 // Called when the game starts or when spawned
 void APlatformMaster::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerReference = Cast<ADimenseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-};
+}
 
 // Called every frame
 void APlatformMaster::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-};
+}
 
 // Checks if there is another platform above this platform by tracing a box the width and height of the player from where the player will land
 bool APlatformMaster::PlatformAbovePlatformCheck()
@@ -55,5 +55,5 @@ bool APlatformMaster::PlatformAbovePlatformCheck()
 		DrawDebugBox(GetWorld(), Offset, FVector(PlayerReference->MyWidth / 2, PlayerReference->MyWidth / 2, PlayerReference->MyHeight / 2), FColor::Purple, false, .5, 95, 5);
 	}
 	return false;
-};
+}
 
