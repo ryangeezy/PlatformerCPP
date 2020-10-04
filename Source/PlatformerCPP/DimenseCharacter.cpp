@@ -22,8 +22,7 @@
 #include "SurfacePlatformComponent.h"
 
 // Sets default values
-ADimenseCharacter::ADimenseCharacter()
-{
+ADimenseCharacter::ADimenseCharacter(){
 	//Unreal Variables
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -78,7 +77,7 @@ ADimenseCharacter::ADimenseCharacter()
 	MainCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("MainCamera"));
 	MainCamera->SetupAttachment(MainCameraSpringArm, FName(TEXT("MainCamera")));
 	MainCamera->ProjectionMode = ECameraProjectionMode::Perspective;
-	MainCamera->FieldOfView = 0.01f;
+	MainCamera->FieldOfView = 0.1f;
 	
 	//AntiCamera is used as a point of reference for the location opposite of the camera (where the MainCamera would be if the Spring Arm was rotated 180 degrees)
 	AntiCameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("AntiCameraSpringArm"));
@@ -107,15 +106,13 @@ ADimenseCharacter::ADimenseCharacter()
 }
 
 // Called when the game starts or when spawned
-void ADimenseCharacter::BeginPlay()
-{
+void ADimenseCharacter::BeginPlay(){
 	Super::BeginPlay(); // DO NOT remove
 	InitDebug();
 }
 
 // Called every frame
-void ADimenseCharacter::Tick(float DeltaTime)
-{
+void ADimenseCharacter::Tick(float DeltaTime){
 	Super::Tick(DeltaTime); // DO NOT remove
 
 	//Keep track of the order of things here. The following order is most logical.
@@ -147,8 +144,7 @@ void ADimenseCharacter::Tick(float DeltaTime)
 	}
 }
 
-void ADimenseCharacter::DoLineTracesAndPlatformChecks()
-{
+void ADimenseCharacter::DoLineTracesAndPlatformChecks(){
 	//Check if the player is on the ground...
 	if (BoxTraceVertical(FootLocation, GroundHitResult, GroundTraceLength, GroundTraceLength, -1, TEXT("Ground"), 0, true)) { //if you are on the ground
 		//if (PlayerAbovePlatformCheck(Cast<APlatformMaster>(GroundHitResult.GetActor()))) {
@@ -161,28 +157,32 @@ void ADimenseCharacter::DoLineTracesAndPlatformChecks()
 			TryTransport();
 		}else{
 			//Check if there is something above and if so, move "around" it (forward or backward)
-			if (BoxTraceVertical(HeadLocation, HeadHitResult, HeadTraceLength, 1, 1, TEXT("Head"), 1, true)) {
-				TryMoveAround(HeadHitResult, FVector (0.0f,0.0f,HeadTraceLength));
+			if (VisibilitySide != 0) {
+				if (BoxTraceVertical(HeadLocation, HeadHitResult, HeadTraceLength, 1, 1, TEXT("Head"), 1, true)) {
+					TryMoveAround(HeadHitResult, FVector(0.0f, 0.0f, HeadTraceLength));
+				}
 			}
 		}
 	}	
 
 	//Check if the player is moving to the right
-	if (MovementDirection == 1) {
-		//Check if there is something to the right and if so, move "around" it (forward or backward)
-		if (RightHitCheck()) {
-			TryMoveAround(RightHitResult, NullVector);
+	if (VisibilitySide != 0) {
+		if (MovementDirection == 1) {
+			//Check if there is something to the right and if so, move "around" it (forward or backward)
+			if (RightHitCheck()) {
+				TryMoveAround(RightHitResult, NullVector);
+			}
 		}
-	}else if (MovementDirection == -1) { //Check if the player is moving to the left
-		//Check if there is something to the left and if so, move "around" it (forward or backward)
-		if (LeftHitCheck()) {
-			TryMoveAround(LeftHitResult, NullVector);
+		else if (MovementDirection == -1) { //Check if the player is moving to the left
+		   //Check if there is something to the left and if so, move "around" it (forward or backward)
+			if (LeftHitCheck()) {
+				TryMoveAround(LeftHitResult, NullVector);
+			}
 		}
 	}
 }
 
-bool ADimenseCharacter::HorizontalHitCheck(const FVector& Location, FHitResult& HitResult)
-{
+bool ADimenseCharacter::HorizontalHitCheck(const FVector& Location, FHitResult& HitResult){
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
@@ -228,8 +228,7 @@ bool ADimenseCharacter::HorizontalHitCheck(const FVector& Location, FHitResult& 
 	return false;
 }
 
-bool ADimenseCharacter::LeftHitCheck()
-{
+bool ADimenseCharacter::LeftHitCheck(){
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
@@ -299,8 +298,7 @@ bool ADimenseCharacter::LeftHitCheck()
 	return false;
 }
 
-bool ADimenseCharacter::RightHitCheck()
-{
+bool ADimenseCharacter::RightHitCheck(){
 	FVector Start;
 	FVector End;
 	FVector Distance = FVector(SideTraceLength, SideTraceLength, 0.0f) * CamRightVector;
@@ -365,8 +363,7 @@ bool ADimenseCharacter::RightHitCheck()
 	return false;
 } 
 
-bool ADimenseCharacter::TryTransport()
-{
+bool ADimenseCharacter::TryTransport(){
 	if (bCanTransport) {
 		if (BoxTraceForTransportHit(TransportTraceZOffset)) {
 			if (Cast<USurfacePlatformComponent>(TransportHitResult.GetActor()->FindComponentByClass(USurfacePlatformComponent::StaticClass()))) {
@@ -385,7 +382,7 @@ bool ADimenseCharacter::TryTransport()
 	return false;
 }
 
-bool ADimenseCharacter::BoxTraceForTransportHit(const float& ZOffset) {
+bool ADimenseCharacter::BoxTraceForTransportHit(const float& ZOffset){
 	FVector BoxSize = FVector((MyWidth / 2), (MyWidth / 2), 0);
 	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
 	FVector LineVector = FromCameraLineVector * CamForwardVector * VisibilitySide;
@@ -401,8 +398,7 @@ bool ADimenseCharacter::BoxTraceForTransportHit(const float& ZOffset) {
 	return GetWorld()->SweepSingleByChannel(TransportHitResult, Start, End, MainCamera->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams);
 }
 
-void ADimenseCharacter::Transport()
-{
+void ADimenseCharacter::Transport(){
 	if (bDebug && bDebugTransport) {
 		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, (TEXT("Transport")));
 	}
@@ -410,19 +406,17 @@ void ADimenseCharacter::Transport()
 	StartCanMoveAroundTimer();
 }
 
-FVector ADimenseCharacter::GetTransportOffset(const APlatformMaster* Platform) const
-{
+FVector ADimenseCharacter::GetTransportOffset(const APlatformMaster* Platform) const{
 	FVector Origin; FVector Extent; Platform->GetActorBounds(true, Origin, Extent);
 	FVector Offset = FVector(TransportHitResult.Location.X, TransportHitResult.Location.Y, Origin.Z + Extent.Z) - GetActorLocation();
-	FVector TransportOffset = CamForwardVector.GetAbs() * (Offset + (LandingOffsetPadding.X * CamSide * CamSign * VisibilitySide));
+	FVector TransportOffset = CamForwardVector.GetAbs() * (Offset + LandingOffsetPadding * CamSide * CamSign * VisibilitySide);
 	if (bDebug && bDebugTransport) {
 		DrawDebugBox(GetWorld(), Origin, Extent, FColor::Green, false, 0.5f, 0,10.0f);
 	}
 	return TransportOffset;
 }
 
-bool ADimenseCharacter::TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector BoxTraceOffset)
-{
+bool ADimenseCharacter::TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector BoxTraceOffset){
 	if (bCanMoveAround) {
 		if (BoxTraceForMoveAroundHit(HitResult, BoxTraceOffset)) {
 			if (SetPlatform(MoveAroundPlatform, CachedMoveAroundPlatform, MoveAroundHitResult, FColor::Orange, true)) {
@@ -434,8 +428,7 @@ bool ADimenseCharacter::TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector
 	return false;
 }
 
-bool ADimenseCharacter::BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector Offset)
-{
+bool ADimenseCharacter::BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector Offset){
 	FVector BoxSize = FVector(MyWidth / 2, MyWidth / 2, MyHeight / 2);
 	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
 	FVector LineVector = FromCameraLineVector * CamForwardVector * VisibilitySide;
@@ -450,8 +443,7 @@ bool ADimenseCharacter::BoxTraceForMoveAroundHit(FHitResult& HitResult, FVector 
 	return GetWorld()->SweepSingleByChannel(MoveAroundHitResult, Start, End, MainCamera->GetComponentQuat(), ECollisionChannel::ECC_WorldStatic, Box, QParams);
 }
 
-void ADimenseCharacter::MoveAround()
-{
+void ADimenseCharacter::MoveAround(){
 	if (bDebug && bDebugMoveAround) {
 		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Orange, (TEXT("MoveAround")));
 	}
@@ -459,21 +451,18 @@ void ADimenseCharacter::MoveAround()
 	StartCanTransportTimer();
 }
 
-FVector ADimenseCharacter::GetMoveAroundOffset(const FVector& Location) const
-{
+FVector ADimenseCharacter::GetMoveAroundOffset(const FVector& Location) const{
 	FVector Offset = Location - GetActorLocation();
-	FVector WorldOffset = FVector(1.0f, 1.0f, 0.0f) * CamForwardVector * VisibilitySide * CamSide * CamSign * (Offset - LandingOffsetPadding * CamSide * CamSign);
+	FVector MoveAroundOffset = CamForwardVector.GetAbs() * (Offset - LandingOffsetPadding * CamSide * CamSign * VisibilitySide);
 	if (bDebug && bDebugMoveAround) {
 		FVector Origin; FVector Extent; MoveAroundPlatform->GetActorBounds(true, Origin, Extent);
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2) + WorldOffset, 500.0f, FColor::Orange, false, 5.0f, 54, 3.0f);
-		//DrawDebugSphere(GetWorld(), HitResult.Location, 10, 4, FColor::Yellow, false, 3, 0, 10);
+		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2), GetActorLocation() - FVector(0.0f, 0.0f, MyHeight / 2) + MoveAroundOffset, 500.0f, FColor::Orange, false, 5.0f, 54, 3.0f);
 		DrawDebugBox(GetWorld(), Origin, Extent, FColor::Orange, false, 0.5f, 0, 10.0f);
 	}
-	return WorldOffset;
+	return MoveAroundOffset;
 }
 
-bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal)
-{
+bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal){
 	FVector BoxSize = FVector(CamSide * (MyWidth / 2), CamSide * (MyWidth / 2), MyHeight / 2);
 	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
 	FVector Start = GetActorLocation();
@@ -491,20 +480,29 @@ bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& T
 	return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions below this line are considered complete and have no known problems /////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-
-
-
-// Functions below this line are considered complete and have no known problems /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal)
-{
+bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal){
 	//UpOrDown should be 1 or -1
 	FVector BoxSize = FVector(CamSide * (MyWidth / 3), CamSide * (MyWidth / 3), BoxHalfHeight);
 	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
@@ -524,8 +522,7 @@ bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& Hi
 	return false;
 }
 
-bool ADimenseCharacter::SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, UPARAM(ref) FHitResult& HitResult, const FColor DebugColor, const bool bDebugLocal)
-{
+bool ADimenseCharacter::SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, UPARAM(ref) FHitResult& HitResult, const FColor DebugColor, const bool bDebugLocal){
 	APlatformMaster* NewPlatform = Cast<APlatformMaster>(HitResult.GetActor());
 	if (NewPlatform) {
 		if (Platform != NewPlatform) {
@@ -543,8 +540,7 @@ bool ADimenseCharacter::SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPAR
 	return false;
 }
 
-bool ADimenseCharacter::PlayerAbovePlatformCheck(const APlatformMaster* Platform) const
-{
+bool ADimenseCharacter::PlayerAbovePlatformCheck(const APlatformMaster* Platform) const{
 	if (bDebug && bDebugAbovePlatform) {
 		GEngine->AddOnScreenDebugMessage(-1, 0.01f, FColor::FromHex(TEXT("0081FFFF")), (TEXT("Player Above Platform Check"))); //Blue
 	}
@@ -561,8 +557,7 @@ bool ADimenseCharacter::PlayerAbovePlatformCheck(const APlatformMaster* Platform
 	return false;
 }
 
-void ADimenseCharacter::InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor)
-{
+void ADimenseCharacter::InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor){
 	if (Platform) {
 		if (bDebug && bDebugInvalidation) {
 			FVector Origin;	FVector Extent;	Platform->GetActorBounds(true, Origin, Extent);
@@ -573,8 +568,7 @@ void ADimenseCharacter::InvalidatePlatform(UPARAM(ref) APlatformMaster*& Platfor
 	}
 }
 
-void ADimenseCharacter::InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor)
-{
+void ADimenseCharacter::InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& CachedPlatform, const FColor DebugColor){
 	if (CachedPlatform) {
 		if (bDebug && bDebugCachedInvalidation) {
 			FVector Origin;	FVector Extent;	CachedPlatform->GetActorBounds(true, Origin, Extent);
@@ -584,8 +578,7 @@ void ADimenseCharacter::InvalidateCachedPlatform(UPARAM(ref) APlatformMaster*& C
 	}
 }
 
-void ADimenseCharacter::UpdateMovementSystemVariables()
-{
+void ADimenseCharacter::UpdateMovementSystemVariables(){
 	//The Cam* variables are used by the movement system to determine which vectors apply based on the camera angle, and also direction based on +/- values
 	CamForwardVector = RoundVector(FVector(MainCamera->GetForwardVector()));
 	CamRightVector = RoundVector(FVector(MainCamera->GetRightVector()));
@@ -603,7 +596,7 @@ void ADimenseCharacter::UpdateMovementSystemVariables()
 	SetVisibilitySide();
 }
 
-void ADimenseCharacter::SetMovementDirection() {
+void ADimenseCharacter::SetMovementDirection(){
 	//Check if the player is moving to the right
 	if (PhysicsComp->GetComponentVelocity().X * CamSign > 0 || PhysicsComp->GetComponentVelocity().Y * CamSign > 0) {
 		MovementDirection = 1;
@@ -618,20 +611,17 @@ void ADimenseCharacter::SetMovementDirection() {
 	}
 }
 
-FVector ADimenseCharacter::GetMovementInputFRI() //(FRI = Frame Rate Independent)
-{
+FVector ADimenseCharacter::GetMovementInputFRI(){ //(FRI = Frame Rate Independent)
 	return GetWorld()->GetDeltaSeconds() * ConsumeMovementInputVector() * WalkAcceleration;
 }
 
-int32 ADimenseCharacter::MoveLeftRight(const float& AxisValue)
-{
+int32 ADimenseCharacter::MoveLeftRight(const float& AxisValue){
 	GetCharacterMovement()->AddInputVector(CamRightVector * AxisValue);
 	FacingDirection = FMath::Sign(AxisValue);
 	return FacingDirection;
 }
 
-void ADimenseCharacter::JumpDown()
-{
+void ADimenseCharacter::JumpDown(){
 	if (GroundPlatform) {
 		if (BoxTraceForTransportHit(TransportTraceZOffset)) {
 			if (SetPlatform(TransportPlatform, CachedTransportPlatform, TransportHitResult, FColor::Green, bDebugTransport)) {
@@ -643,13 +633,11 @@ void ADimenseCharacter::JumpDown()
 	}
 }
 
-bool ADimenseCharacter::IsFallingDownward() const
-{
+bool ADimenseCharacter::IsFallingDownward() const{
 	return PhysicsComp->GetComponentVelocity().Z < 0.0f;
 }
 
-bool ADimenseCharacter::CheckDeathByFallDistance()
-{
+bool ADimenseCharacter::CheckDeathByFallDistance(){
 	if (DeathParticle) { //make sure the particle effect is selected in the blueprint
 		if (GroundPlatform) {
 			if (FootLocation.Z < GroundPlatform->GetActorLocation().Z - DeathDistance) {
@@ -666,8 +654,7 @@ bool ADimenseCharacter::CheckDeathByFallDistance()
 	return false;
 }
 
-void ADimenseCharacter::SetVisibilitySide()
-{
+void ADimenseCharacter::SetVisibilitySide(){
 	//If something is in between the camera and player: 1 if player is visible, -1 if visible from the back, 0 if not visible from either side
 	if (VisibilityCheck(MainCamera->GetComponentLocation())) { //visible from the front?
 		VisibilitySide = 1;
@@ -679,8 +666,7 @@ void ADimenseCharacter::SetVisibilitySide()
 	}
 }
 
-bool ADimenseCharacter::VisibilityCheck(const FVector& Start)
-{
+bool ADimenseCharacter::VisibilityCheck(const FVector& Start){
 	int32 HitCount = 0;
 	float Distance = MainCameraSpringArm->TargetArmLength;
 	float X = CamSide * PhysicsComp->Bounds.BoxExtent.X;
@@ -725,7 +711,7 @@ bool ADimenseCharacter::VisibilityCheck(const FVector& Start)
 	return true;
 }
 
-bool ADimenseCharacter::SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVector& Start, const FVector& End) const {
+bool ADimenseCharacter::SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVector& Start, const FVector& End) const{
 	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, QParams);
 	if (HitResult.IsValidBlockingHit()) {
 		return true;
@@ -733,8 +719,7 @@ bool ADimenseCharacter::SingleTrace(UPARAM(ref) FHitResult& HitResult, const FVe
 	return false;
 }
 
-void ADimenseCharacter::PauseMovement()
-{
+void ADimenseCharacter::PauseMovement(){
 	DisableInput(GetWorld()->GetFirstPlayerController());
 	bCanTransport = false;
 	bCanMoveAround = false;
@@ -742,8 +727,7 @@ void ADimenseCharacter::PauseMovement()
 	KillMomentum();
 }
 
-void ADimenseCharacter::KillMomentum() 
-{
+void ADimenseCharacter::KillMomentum(){
 	CachedJumpKeyHoldTime = JumpKeyHoldTime;
 	CachedComponentVelocity = PhysicsComp->GetPhysicsLinearVelocity();
 	CachedCharacterMovementVelocity = GetCharacterMovement()->Velocity;
@@ -751,8 +735,7 @@ void ADimenseCharacter::KillMomentum()
 	GetCharacterMovement()->Velocity = FVector(0.0f, 0.0f, 0.0f);
 }
 
-void ADimenseCharacter::ResumeMovement()
-{
+void ADimenseCharacter::ResumeMovement(){
 	GetCharacterMovement()->GravityScale = 1.0f;
 	GetCharacterMovement()->Velocity = CachedCharacterMovementVelocity;
 	PhysicsComp->SetAllPhysicsLinearVelocity(CachedComponentVelocity);
@@ -763,16 +746,14 @@ void ADimenseCharacter::ResumeMovement()
 	EnableInput(GetWorld()->GetFirstPlayerController());
 }
 
-void ADimenseCharacter::RotateMeshToMovement()
-{
+void ADimenseCharacter::RotateMeshToMovement(){
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(MainCamera->GetComponentLocation(), GetMesh()->GetComponentLocation());
 	auto MeshLatentInfo = FLatentActionInfo();
 	MeshLatentInfo.CallbackTarget = GetMesh();
 	UKismetSystemLibrary::MoveComponentTo(GetMesh(), GetMesh()->GetRelativeLocation(), FRotator(0.0f, (LookAtRotation.Yaw) + 90.0f + -90.0f * FacingDirection, 0.0f), true, true, MeshRotationTime, false, EMoveComponentAction::Move, MeshLatentInfo);
 }
 
-void ADimenseCharacter::RotateCamera(const float& Rotation)
-{
+void ADimenseCharacter::RotateCamera(const float& Rotation){
 	if (!bSpinning) {
 		for (int32 i = 1; i < 5; i++) {
 			if (UKismetMathLibrary::EqualEqual_RotatorRotator(RotationSpringArm->GetRelativeRotation(), FRotator(0.0f, i * 90.0f, 0.0f), 0.001f)) {
@@ -791,8 +772,7 @@ void ADimenseCharacter::RotateCamera(const float& Rotation)
 	}
 }
 
-void ADimenseCharacter::Die()
-{
+void ADimenseCharacter::Die(){
 	FTransform Spawn = PhysicsComp->GetComponentTransform();
 	PauseMovement();
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DeathParticle, Spawn);
@@ -801,8 +781,7 @@ void ADimenseCharacter::Die()
 	InvalidatePlatform(MoveAroundPlatform, CachedMoveAroundPlatform);
 }
 
-void ADimenseCharacter::Respawn()
-{
+void ADimenseCharacter::Respawn(){
 	bCanMoveAround = true;
 	bCanTransport = true;
 	PhysicsComp->SetWorldLocation(GroundLocation+FVector(0.0f,0.0f,MyHeight/2));
@@ -810,8 +789,7 @@ void ADimenseCharacter::Respawn()
 	EnableInput(GetWorld()->GetFirstPlayerController());
 }
 
-FVector ADimenseCharacter::RoundVector(const FVector& Vector) const
-{
+FVector ADimenseCharacter::RoundVector(const FVector& Vector) const{
 	return FVector(FMath::RoundToInt(Vector.X), FMath::RoundToInt(Vector.Y), FMath::RoundToInt(Vector.Z));
 }
 
@@ -830,34 +808,41 @@ bool ADimenseCharacter::SingleBoxTrace(UPARAM(ref) FHitResult& HitResult, const 
 }
 */
 
-
-
-
-
-
-
-
-
-
-
-// Init and Debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Init and Debug ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Called to bind functionality to input
-void ADimenseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
+void ADimenseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent){
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-void ADimenseCharacter::InitDebug()
-{
+void ADimenseCharacter::InitDebug(){
 	//Enable/Disable debug printing, views, control panel, etc.
 	if (!bDebug) {
 		bDebugPlatformRemote = false;
 	}
 }
 
-void ADimenseCharacter::Debug() const
-{
+void ADimenseCharacter::Debug() const{
 	FString TransportPlatformText = TEXT("TransportPlatform: ");
 	FString GroundPlatformText = TEXT("GroundPlatform: ");
 	FString MoveAroundPlatformText = TEXT("MoveAroundPlatform: ");

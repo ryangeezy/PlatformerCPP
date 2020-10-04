@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Pickup.generated.h"
 
+class UCameraComponent;
 class ADimenseCharacter;
 
 UCLASS()

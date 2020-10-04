@@ -9,8 +9,8 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UWorld;
-class APlatformMaster;
 class UParticleSystem;
+class APlatformMaster;
 
 UCLASS()
 class PLATFORMERCPP_API ADimenseCharacter : public ACharacter
@@ -102,6 +102,9 @@ public:
 			UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Timers")
 				void StartCanMoveAroundTimer(); //ignore green squigly
 				virtual void StartCanMoveAroundTimer_Implementation();
+
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+			UCameraComponent* MainCamera;
 
 private:
 	//Default Required
@@ -220,8 +223,6 @@ private:
 			TArray<TEnumAsByte<EObjectTypeQuery>> PickupObjectTypes;
 
 		//Components
-			UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-				UCameraComponent* MainCamera;
 
 			UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 				UCapsuleComponent* PhysicsComp;
