@@ -76,6 +76,9 @@ public:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 			bool bDebugCachedInvalidation;
 
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+			bool bIsInside;
+
 	//Functions
 		UFUNCTION(BlueprintCallable, Category = "Movement") 
 			FVector GetTransportOffset(const APlatformMaster* Platform) const;
@@ -124,6 +127,7 @@ private:
 		FVector LandingOffsetPadding;
 		FVector NullVector;
 		FVector HeightPadding;
+		FVector MoveAroundBoxSize;
 		int32 FacingDirection;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
@@ -137,6 +141,12 @@ private:
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			APlatformMaster* TransportPlatform = nullptr;
+
+		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
+			APlatformMaster* TryTransportPlatform = nullptr;
+
+		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
+			APlatformMaster* CachedTryTransportPlatform = nullptr;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			APlatformMaster* GroundPlatform = nullptr;
@@ -172,16 +182,13 @@ private:
 			FHitResult HeadHitResult;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
-			FHitResult LeftHitResult;
+			FHitResult LeftRightHitResult;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			FHitResult MoveAroundHitResult;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
 			FHitResult RearHitResult;
-
-		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Platform", meta = (AllowPrivateAccess = "true"))
-			FHitResult RightHitResult;	
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			float TransportTraceZOffset;
@@ -196,7 +203,7 @@ private:
 			float MeshRotationTime;
 
 		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			float SideTraceLength;
+			float MoveAroundTraceLength;
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			float WalkAcceleration;		
@@ -261,19 +268,13 @@ private:
 			bool BoxTraceHorizontal(FHitResult& HitResult, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const bool bDebugLocal);
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool HorizontalHitCheck(const FVector& Location, FHitResult& HitResult);
+			bool HorizontalHitCheck(FHitResult& HitResult);
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool IsFallingDownward() const;
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool LeftHitCheck();
-
-		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool PlayerAbovePlatformCheck(const APlatformMaster* Platform) const;
-
-		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool RightHitCheck();
 
 		UFUNCTION(BlueprintCallable, Category = "Platforms", meta = (AllowPrivateAccess = "true"))
 			bool SetPlatform(UPARAM(ref) APlatformMaster*& Platform, UPARAM(ref) APlatformMaster*& CachedPlatform, UPARAM(ref) FHitResult& HitResult, const FColor DebugColor, const bool bDebugLocal);
