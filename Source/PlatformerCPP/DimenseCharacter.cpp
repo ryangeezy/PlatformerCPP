@@ -41,8 +41,10 @@ ADimenseCharacter::ADimenseCharacter(){
 	bSpinning = false; //Is the camera actively spinning to a new 90 degree view?
 	bIsInside = false;
 	PhysicsComp = GetCapsuleComponent(); //Set the physics component
-	MyHeight = PhysicsComp->GetUnscaledCapsuleHalfHeight(); //Player Height
-	MyWidth = PhysicsComp->GetUnscaledCapsuleRadius(); //Player Width
+	MyHeight = PhysicsComp->GetScaledCapsuleHalfHeight(); //Player Height
+	MyWidth = PhysicsComp->GetScaledCapsuleRadius(); //Player Width
+	MyHeight = 100; //Player Height
+	MyWidth = 37.5; //Player Width
 	DefaultSpringArmLength = 2097152.0f; //Distance from camera to the player
 	MoveAroundTraceLength = 25.0f; //Length of lines drawn to detect walls/edges to move around
 	MoveAroundBoxSize = FVector(25, 25, 50);
@@ -148,7 +150,7 @@ void ADimenseCharacter::Tick(float DeltaTime){
 
 void ADimenseCharacter::DoLineTracesAndPlatformChecks(){
 	//Check if the player is on the ground...
-	if (BoxTraceVertical(FootLocation, GroundHitResult, GroundTraceLength, GroundTraceLength, -1, TEXT("Ground"), 0, true)) { //if you are on the ground
+	if (BoxTraceVertical(FootLocation, GroundHitResult, FVector(MyWidth/2, MyWidth/2, GroundTraceLength), GroundTraceLength, -1, TEXT("Ground"), 0, true)) { //if you are on the ground
 		//if (PlayerAbovePlatformCheck(Cast<APlatformMaster>(GroundHitResult.GetActor()))) {
 			SetPlatform(GroundPlatform, CachedGroundPlatform, GroundHitResult, FColor::FromHex(TEXT("240B00FF")), true); //brown
 		//}
@@ -161,7 +163,7 @@ void ADimenseCharacter::DoLineTracesAndPlatformChecks(){
 			}else{
 				//Check if there is something above and if so, move "around" it (forward or backward)
 				if (VisibilitySide != 0) {
-					if (BoxTraceVertical(HeadLocation, HeadHitResult, HeadTraceLength, 1, 1, TEXT("Head"), 1, true)) {
+					if (BoxTraceVertical(HeadLocation, HeadHitResult, FVector(MyWidth/2, MyWidth/2, HeadTraceLength), 1, 1, TEXT("Head"), 1, true)) {
 						TryMoveAround(HeadHitResult, FVector(0.0f, 0.0f, HeadTraceLength));
 					}
 				}
@@ -385,9 +387,9 @@ bool ADimenseCharacter::BoxTraceHorizontal(FHitResult& HitResult, const float& T
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions below this line are considered complete and have no known problems /////////////////////////////////////////////////////////////////////////////////////////
 
-bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal){
+bool ADimenseCharacter::BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const FVector BoxSize, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal){
 	//UpOrDown should be 1 or -1
-	FCollisionShape Box = FCollisionShape::MakeBox(MoveAroundBoxSize);
+	FCollisionShape Box = FCollisionShape::MakeBox(BoxSize);
 	FVector End = Location + ((FVector(0.0f, 0.0f, TraceLength) * UpOrDown));
 	if (GetWorld()->SweepSingleByChannel(HitResult, Location, End, FQuat(0,0,0,0), ECollisionChannel::ECC_WorldStatic, Box, QParams)) {
 		if (bDebug && bDebugLocal) {

@@ -294,7 +294,7 @@ private:
 			bool TryMoveAround(UPARAM(ref) FHitResult& HitResult, FVector BoxTraceOffset);
 
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
-			bool BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const float BoxHalfHeight, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal);
+			bool BoxTraceVertical(const FVector& Location, FHitResult& HitResult, const FVector BoxSize, const float& TraceLength, const int32 UpOrDown, const FString DebugPhrase, const int32 DebugTime, const bool bDebugLocal);
 		
 		UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 			bool VisibilityCheck(const FVector& Start);
